@@ -53,3 +53,25 @@ spring init \
 product-composite-service
 
 cd ..
+
+spring init \
+--boot-version=3.5.4 \
+--type=maven-project \
+--java-version=21 \
+--packaging=jar \
+--name=api \
+--package-name=se.magnus.microservices.api \
+--groupId=se.magnus.microservices.api \
+--version=1.0.0-SNAPSHOT \
+api
+
+spring init \
+--boot-version=3.5.4 \
+--type=maven-project \
+--java-version=21 \
+--packaging=jar \
+--name=util \
+--package-name=se.magnus.microservices.util \
+--groupId=se.magnus.microservices.util \
+--version=1.0.0-SNAPSHOT \
+util

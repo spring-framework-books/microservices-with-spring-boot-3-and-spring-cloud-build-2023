@@ -45,6 +45,17 @@ information about a product as follows:
 • A list of product reviews for the specified product, as described in the review service
 • A list of product recommendations for the specified product, as described in the recommendation service
 
+## api project
+First, we will set up a separate Gradle project where we can place our API definitions. We will
+use Java interfaces in order to describe our RESTful APIs and model classes to describe the
+data that the API uses in its requests and responses. To describe what types of errors can be
+returned by the API, a number of exception classes are also defined. Describing a RESTful
+API in a Java interface instead of directly in the Java class is, to me, a good way of separating
+the API definition from its implementation. 
+
+The api project will be packaged as a library; that is, it won’t have its own main application class.
+## util project
+util project that hold some helper classes that are shared by our microservices, for example, for handling errors in a uniform way
 ## Infrastructure-related information
 Once we start to run our microservices as containers that are managed by the infrastructure (first
 Docker and later on Kubernetes), it will be of interest to track which containers actually responded
