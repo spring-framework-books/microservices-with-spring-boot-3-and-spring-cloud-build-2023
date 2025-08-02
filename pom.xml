@@ -6,7 +6,6 @@
     <groupId>se.magnus.microservices</groupId>
     <artifactId>product-microservices</artifactId>
     <version>1.0.0</version>
-    <version>1.0.0</version>
     <packaging>pom</packaging>
     <name>Microservices Parent</name>
     <description>Parent POM for Spring Boot Microservices</description>
@@ -40,6 +39,7 @@
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
+
                 </plugin>
             </plugins>
         </pluginManagement>

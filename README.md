@@ -91,7 +91,7 @@ To simplify setting up the projects, we will use Spring Initializr to generate a
 
 ./create-projects.bash
 
-### Build
+### Build locally
 We can build each microservice separately with the following command:
 
 cd microservices/product-composite-service; ./gradlew build; cd -; \
@@ -109,3 +109,62 @@ we can build all the microservices with one command:
 ./gradlew build
 
 ./mvnw install
+
+
+./mvnw clean package spring-boot:repackage -pl microservices/product-composite-service  -DskipTests & \
+./mvnw clean package spring-boot:repackage -pl microservices/product-service  -DskipTests & \
+./mvnw clean package spring-boot:repackage -pl microservices/recommendation-service  -DskipTests & \
+./mvnw clean package spring-boot:repackage -pl microservices/review-service  -DskipTests
+
+java -jar microservices/product-composite-service/target/*.jar & \
+java -jar microservices/product-service/target/*.jar & \
+java -jar microservices/recommendation-service/target/*.jar & \
+java -jar microservices/review-service/target/*.jar &
+### Build using docker
+cd microservices/product-service
+
+docker build -t product-service .
+
+docker run --rm -p 8080:8080 -e "SPRING_PROFILES_ACTIVE=docker" product-service
+
+### Build using docker compose
+cd microservices
+
+../mvnw clean package spring-boot:repackage -DskipTests
+
+docker-compose build
+
+docker-compose up -d
+
+docker-compose down
+
+### Test
+
+#### Locally
+chmod +x test-em-all.bash 
+
+./test-em-all.bash
+
+#### Docker
+./test-docker.sh start stop
+### Run
+cd microservices/
+
+../mvnw -pl product-service spring-boot:run
+
+../mvnw -pl recommendation-service spring-boot:run
+
+../mvnw -pl review-service spring-boot:run
+
+../mvnw -pl product-composite-service spring-boot:run
+
+### Access
+
+#### locally
+curl http://localhost:7001/product/123
+
+curl http://localhost:7000/product-composite/123  -s | jq .
+
+#### docker
+
+curl localhost:8080/product-composite/123 -s | jq .

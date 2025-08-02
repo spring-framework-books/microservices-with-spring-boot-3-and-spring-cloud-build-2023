@@ -1,0 +1,44 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-ProductCompositeServiceApplication<product-composite-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "se.magnus.microservices.composite.product.ProductCompositeServiceApplication",
+            "projectName": "product-composite-service",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ProductServiceApplication<product-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "se.magnus.microservices.core.product.ProductServiceApplication",
+            "projectName": "product-service",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-RecommendationServiceApplication<recommendation-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "se.magnus.microservices.core.recommendation.RecommendationServiceApplication",
+            "projectName": "recommendation-service",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ReviewServiceApplication<review-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "se.magnus.microservices.core.review.ReviewServiceApplication",
+            "projectName": "review-service",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
