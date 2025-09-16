@@ -8,10 +8,21 @@ It consists of three core microservices, the product, review, and recommendation
 which deal with one type of resource, and a composite microservice called the Product Composite
 service, which aggregates information from the three core services.
 
+The Protocol layer handles protocol-specific logic. It is very thin, only consisting of the RestController
+annotations in the api project and the common GlobalControllerExceptionHandler in the util
+project. The main functionality of each microservice resides in each Service layer. 
+
+The product-composite service contains an Integration layer used to handle the communication 
+with the three core microservices. The core microservices will all have a Persistence layer used for 
+communicating with their databases.
+
+Besides using Spring Data, we  will also use a Java bean mapping tool, MapStruct, which makes it easy to transform between Spring Data entity objects and the API model classes.
+
 To keep the source code examples in this book easy to understand, they have a minimal amount of
 business logic. The information model for the business objects they process is kept minimal for the
 same reason. In this section, we will go through the information that’s handled by each microservice,
 including infrastructure-related information.
+
 ## The product service
 The product service manages product information and describes each product with the following
 attributes:
@@ -66,6 +77,12 @@ formatted as hostname/ip-address:port.
 We will develop microservices that contain business logic based on plain Spring Beans and expose REST APIs using Spring WebFlux. The APIs will be documented based on the OpenAPI Specification using springdoc-openapi. To make the data processed by the microservices persistent, we will use Spring Data to store data in both SQL and NoSQL databases.
 
 we will use Docker to run our microservices as containers. This will allow us to start and stop our microservice landscape, including database servers and a message broker, with a single command.
+
+## Database
+we will use the Spring Data project to persist data to MongoDB and Postgres databases.
+
+The product and recommendation microservices will use Spring Data for MongoDB and the review microservice will use Spring Data for the Java Persistence API (JPA) to access a Postgres database.
+
 ## Technical requirements
 • Spring Boot
 • Spring WebFlux
@@ -91,6 +108,10 @@ To simplify setting up the projects, we will use Spring Initializr to generate a
 
 ./create-projects.bash
 
+## Manage DB
+access data stored in MongoDB with a command like the following:
+ 
+ docker-compose exec mongodb mongosh product-db --quiet --eval "db.products.find()"
 ### Build locally
 We can build each microservice separately with the following command:
 
@@ -109,7 +130,6 @@ we can build all the microservices with one command:
 ./gradlew build
 
 ./mvnw install
-
 
 ./mvnw clean package spring-boot:repackage -pl microservices/product-composite-service  -DskipTests & \
 ./mvnw clean package spring-boot:repackage -pl microservices/product-service  -DskipTests & \
@@ -138,6 +158,11 @@ docker-compose up -d
 
 docker-compose down
 
+
+./mvnw install && docker-compose build && docker-compose up
+
+./gradlew build && docker-compose build && docker-compose up
+
 ### Test
 
 #### Locally
@@ -159,7 +184,9 @@ cd microservices/
 ../mvnw -pl product-composite-service spring-boot:run
 
 ### Access
+OpenAPI documentation
 
+http://localhost:8080/openapi/swagger-ui.html
 #### locally
 curl http://localhost:7001/product/123
 
@@ -168,3 +195,4 @@ curl http://localhost:7000/product-composite/123  -s | jq .
 #### docker
 
 curl localhost:8080/product-composite/123 -s | jq .
+
