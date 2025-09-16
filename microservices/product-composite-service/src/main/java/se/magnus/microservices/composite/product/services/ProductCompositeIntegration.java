@@ -51,25 +51,35 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
         this.restTemplate = restTemplate;
         this.mapper = mapper;
 
-        productServiceUrl = "http://" + productServiceHost + ":" + productServicePort + "/product/";
+        productServiceUrl = "http://" + productServiceHost + ":" + productServicePort + "/product";
         recommendationServiceUrl = "http://" + recommendationServiceHost + ":" + recommendationServicePort
-                + "/recommendation?productId=";
-        reviewServiceUrl = "http://" + reviewServiceHost + ":" + reviewServicePort + "/review?productId=";
+                + "/recommendation";
+        reviewServiceUrl = "http://" + reviewServiceHost + ":" + reviewServicePort + "/review";
     }
 
-    /*
-     * For the getProduct() implementation, the getForObject() method can be used in
-     * RestTemplate. The expected response is a Product object. It can be expressed
-     * in the
-     * call to getForObject() by specifying the Product.class class that
-     * RestTemplate will
-     * map the JSON response to.
-     */
+    @Override
+    public Product createProduct(Product body) {
+
+        try {
+            String url = productServiceUrl;
+            LOG.debug("Will post a new product to URL: {}", url);
+
+            Product product = restTemplate.postForObject(url, body, Product.class);
+            LOG.debug("Created a product with id: {}", product.getProductId());
+
+            return product;
+
+        } catch (HttpClientErrorException ex) {
+            throw handleHttpClientException(ex);
+        }
+    }
+
+    @Override
     public Product getProduct(int productId) {
 
         try {
-            String url = productServiceUrl + productId;
-            LOG.debug("Will call getProduct API on URL: {}", url);
+            String url = productServiceUrl + "/" + productId;
+            LOG.debug("Will call the getProduct API on URL: {}", url);
 
             Product product = restTemplate.getForObject(url, Product.class);
             LOG.debug("Found a product with id: {}", product.getProductId());
@@ -77,64 +87,47 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
             return product;
 
         } catch (HttpClientErrorException ex) {
-            /*
-             * The API client, that is, the integration component of the Composite
-             * microservice, does the reverse; it maps the 422 (UNPROCESSABLE_ENTITY) HTTP
-             * status code to InvalidInputException and
-             * the 404 (NOT_FOUND) HTTP status code to NotFoundException. See the
-             * getProduct() method in
-             * ProductCompositeIntegration.java for the implementation of this
-             * error-handling logic.
-             */
-            switch (HttpStatus.resolve(ex.getStatusCode().value())) {
-                case NOT_FOUND:
-                    throw new NotFoundException(getErrorMessage(ex));
-
-                case UNPROCESSABLE_ENTITY:
-                    throw new InvalidInputException(getErrorMessage(ex));
-
-                default:
-                    LOG.warn("Got an unexpected HTTP error: {}, will rethrow it", ex.getStatusCode());
-                    LOG.warn("Error body: {}", ex.getResponseBodyAsString());
-                    throw ex;
-            }
+            throw handleHttpClientException(ex);
         }
     }
 
-    private String getErrorMessage(HttpClientErrorException ex) {
+    @Override
+    public void deleteProduct(int productId) {
         try {
-            return mapper.readValue(ex.getResponseBodyAsString(), HttpErrorInfo.class).getMessage();
-        } catch (IOException ioex) {
-            return ex.getMessage();
+            String url = productServiceUrl + "/" + productId;
+            LOG.debug("Will call the deleteProduct API on URL: {}", url);
+
+            restTemplate.delete(url);
+
+        } catch (HttpClientErrorException ex) {
+            throw handleHttpClientException(ex);
         }
     }
 
-    /*
-     * For the calls to getRecommendations() and getReviews(), a more advanced
-     * method, exchange(), has to be used. The reason for this is the automatic
-     * mapping from a JSON response to a model class that RestTemplate performs. The
-     * getRecommendations() and getReviews() methods expect a generic list in the
-     * responses, that is, List<Recommendation> and List<Review>. Since generics
-     * don’t hold
-     * any type of information at runtime, we can’t specify that the methods expect
-     * a generic
-     * list in their responses. Instead, we can use a helper class from the Spring
-     * Framework,
-     * ParameterizedTypeReference, which is designed to resolve this problem by
-     * holding
-     * the type information at runtime. This means that RestTemplate can figure out
-     * what
-     * class to map the JSON responses to. To utilize this helper class, we have to
-     * use the
-     * more involved exchange() method instead of the simpler getForObject() method
-     * on RestTemplate.
-     */
+    @Override
+    public Recommendation createRecommendation(Recommendation body) {
+
+        try {
+            String url = recommendationServiceUrl;
+            LOG.debug("Will post a new recommendation to URL: {}", url);
+
+            Recommendation recommendation = restTemplate.postForObject(url, body, Recommendation.class);
+            LOG.debug("Created a recommendation with id: {}", recommendation.getProductId());
+
+            return recommendation;
+
+        } catch (HttpClientErrorException ex) {
+            throw handleHttpClientException(ex);
+        }
+    }
+
+    @Override
     public List<Recommendation> getRecommendations(int productId) {
 
         try {
-            String url = recommendationServiceUrl + productId;
+            String url = recommendationServiceUrl + "?productId=" + productId;
 
-            LOG.debug("Will call getRecommendations API on URL: {}", url);
+            LOG.debug("Will call the getRecommendations API on URL: {}", url);
             List<Recommendation> recommendations = restTemplate
                     .exchange(url, GET, null, new ParameterizedTypeReference<List<Recommendation>>() {
                     })
@@ -144,27 +137,49 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
             return recommendations;
 
         } catch (Exception ex) {
-            /*
-             * The error handling for getRecommendations() and getReviews() in the
-             * integration component is a bit
-             * more relaxed – classed as best-effort, meaning that if it succeeds in getting
-             * product information but
-             * fails to get either recommendations or reviews, it is still considered to be
-             * okay. However, a warning
-             * is written to the log.
-             */
             LOG.warn("Got an exception while requesting recommendations, return zero recommendations: {}",
                     ex.getMessage());
             return new ArrayList<>();
         }
     }
 
+    @Override
+    public void deleteRecommendations(int productId) {
+        try {
+            String url = recommendationServiceUrl + "?productId=" + productId;
+            LOG.debug("Will call the deleteRecommendations API on URL: {}", url);
+
+            restTemplate.delete(url);
+
+        } catch (HttpClientErrorException ex) {
+            throw handleHttpClientException(ex);
+        }
+    }
+
+    @Override
+    public Review createReview(Review body) {
+
+        try {
+            String url = reviewServiceUrl;
+            LOG.debug("Will post a new review to URL: {}", url);
+
+            Review review = restTemplate.postForObject(url, body, Review.class);
+            LOG.debug("Created a review with id: {}", review.getProductId());
+
+            return review;
+
+        } catch (HttpClientErrorException ex) {
+            throw handleHttpClientException(ex);
+        }
+    }
+
+    @Override
     public List<Review> getReviews(int productId) {
 
         try {
-            String url = reviewServiceUrl + productId;
+            String url = reviewServiceUrl + "?productId=" + productId;
 
-            LOG.debug("Will call getReviews API on URL: {}", url);
+            LOG.debug("Will call the getReviews API on URL: {}", url);
             List<Review> reviews = restTemplate
                     .exchange(url, GET, null, new ParameterizedTypeReference<List<Review>>() {
                     })
@@ -176,6 +191,43 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
         } catch (Exception ex) {
             LOG.warn("Got an exception while requesting reviews, return zero reviews: {}", ex.getMessage());
             return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public void deleteReviews(int productId) {
+        try {
+            String url = reviewServiceUrl + "?productId=" + productId;
+            LOG.debug("Will call the deleteReviews API on URL: {}", url);
+
+            restTemplate.delete(url);
+
+        } catch (HttpClientErrorException ex) {
+            throw handleHttpClientException(ex);
+        }
+    }
+
+    private RuntimeException handleHttpClientException(HttpClientErrorException ex) {
+        switch (HttpStatus.resolve(ex.getStatusCode().value())) {
+
+            case NOT_FOUND:
+                return new NotFoundException(getErrorMessage(ex));
+
+            case UNPROCESSABLE_ENTITY:
+                return new InvalidInputException(getErrorMessage(ex));
+
+            default:
+                LOG.warn("Got an unexpected HTTP error: {}, will rethrow it", ex.getStatusCode());
+                LOG.warn("Error body: {}", ex.getResponseBodyAsString());
+                return ex;
+        }
+    }
+
+    private String getErrorMessage(HttpClientErrorException ex) {
+        try {
+            return mapper.readValue(ex.getResponseBodyAsString(), HttpErrorInfo.class).getMessage();
+        } catch (IOException ioex) {
+            return ex.getMessage();
         }
     }
 }

@@ -10,8 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import se.magnus.microservices.core.review.persistence.DBTestBase;
+
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-class ReviewServiceApplicationTests {
+class ReviewServiceApplicationTests  extends DBTestBase{
 
 	@Autowired
 	private WebTestClient client;
