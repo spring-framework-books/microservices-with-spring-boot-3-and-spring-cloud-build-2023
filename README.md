@@ -148,16 +148,16 @@ docker build -t product-service .
 docker run --rm -p 8080:8080 -e "SPRING_PROFILES_ACTIVE=docker" product-service
 
 ### Build using docker compose
-cd microservices
 
-../mvnw clean package spring-boot:repackage -DskipTests
+./mvnw clean install -DskipTests
+
+cd microservices && ../mvnw clean package spring-boot:repackage && cd ..
 
 docker-compose build
 
 docker-compose up -d
 
 docker-compose down
-
 
 ./mvnw install && docker-compose build && docker-compose up
 
@@ -194,5 +194,6 @@ curl http://localhost:7000/product-composite/123  -s | jq .
 
 #### docker
 
+curl localhost:8080/product-composite -s | jq .
 curl localhost:8080/product-composite/123 -s | jq .
 

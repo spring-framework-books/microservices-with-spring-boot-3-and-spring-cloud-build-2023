@@ -1,10 +1,13 @@
 package se.magnus.microservices.core.product.services;
 
+import static java.util.logging.Level.FINE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 import se.magnus.api.core.product.Product;
 import se.magnus.api.core.product.ProductService;
 import se.magnus.api.exceptions.InvalidInputException;
@@ -32,63 +35,53 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public Product createProduct(Product body) {
-    try {
-      ProductEntity entity = mapper.apiToEntity(body);
-      ProductEntity newEntity = repository.save(entity);
+  public Mono<Product> createProduct(Product body) {
 
-      LOG.debug("createProduct: entity created for productId: {}", body.getProductId());
-      return mapper.entityToApi(newEntity);
-
-    } catch (DuplicateKeyException dke) {
-      throw new InvalidInputException("Duplicate key, Product Id: " + body.getProductId());
+    if (body.getProductId() < 1) {
+      throw new InvalidInputException("Invalid productId: " + body.getProductId());
     }
+
+    ProductEntity entity = mapper.apiToEntity(body);
+    Mono<Product> newEntity = repository.save(entity)
+        .log(LOG.getName(), FINE)
+        .onErrorMap(
+            DuplicateKeyException.class,
+            ex -> new InvalidInputException("Duplicate key, Product Id: " + body.getProductId()))
+        .map(e -> mapper.entityToApi(e));
+
+    return newEntity;
   }
 
   @Override
-  public Product getProduct(int productId) {
+  public Mono<Product> getProduct(int productId) {
 
     if (productId < 1) {
       throw new InvalidInputException("Invalid productId: " + productId);
     }
 
-    ProductEntity entity = repository.findByProductId(productId)
-        .orElseThrow(() -> new NotFoundException("No product found for productId: " + productId));
+    LOG.info("Will get product info for id={}", productId);
 
-    Product response = mapper.entityToApi(entity);
-    response.setServiceAddress(serviceUtil.getServiceAddress());
-
-    LOG.debug("getProduct: found productId: {}", response.getProductId());
-
-    return response;
+    return repository.findByProductId(productId)
+        .switchIfEmpty(Mono.error(new NotFoundException("No product found for productId: " + productId)))
+        .log(LOG.getName(), FINE)
+        .map(e -> mapper.entityToApi(e))
+        .map(e -> setServiceAddress(e));
   }
 
   @Override
-  public void deleteProduct(int productId) {
+  public Mono<Void> deleteProduct(int productId) {
+
+    if (productId < 1) {
+      throw new InvalidInputException("Invalid productId: " + productId);
+    }
+
     LOG.debug("deleteProduct: tries to delete an entity with productId: {}", productId);
-    /*
-     * The implementation of the delete operation will be idempotent; that is, it
-     * will return the
-     * same result if called several times. This is a valuable characteristic in
-     * fault scenarios. For
-     * example, if a client experiences a network timeout during a call to a delete
-     * operation, it
-     * can simply call the delete operation again without worrying about varying
-     * responses, for
-     * example, OK (200) in response the first time and Not Found (404) in response
-     * to consecutive calls, or any unexpected side effects. This implies that the
-     * operation should return
-     * the status code OK (200) even though the entity no longer exists in the
-     * database.
-     */
-    /*
-     * The delete method also uses the findByProductId() method in the repository
-     * and uses the ifPresent()
-     * method in the Optional class to conveniently delete the entity only if it
-     * exists. Note that the imple-
-     * mentation is idempotent; it will not report any failure if the entity is not
-     * found.
-     */
-    repository.findByProductId(productId).ifPresent(e -> repository.delete(e));
+    return repository.findByProductId(productId).log(LOG.getName(), FINE).map(e -> repository.delete(e))
+        .flatMap(e -> e);
+  }
+
+  private Product setServiceAddress(Product e) {
+    e.setServiceAddress(serviceUtil.getServiceAddress());
+    return e;
   }
 }

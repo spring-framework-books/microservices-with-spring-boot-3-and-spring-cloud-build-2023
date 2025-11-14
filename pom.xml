@@ -20,8 +20,10 @@
         <spring.boot.version>3.5.4</spring.boot.version>
         <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
         <springdoc.version>2.8.13</springdoc.version>
-        <springdoc-openapi-maven-plugin.version>1.5
-        </springdoc-openapi-maven-plugin.version>
+        <springdoc-openapi-maven-plugin.version>1.5</springdoc-openapi-maven-plugin.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <testcontainersVersion>1.21.3</testcontainersVersion>
+        <spring.cloud.version>2024.0.2</spring.cloud.version>
     </properties>
 
     <dependencyManagement>
@@ -47,6 +49,23 @@
     <build>
         <pluginManagement>
             <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                    <configuration>
+                        <!-- Use the parent java.version for the compiler release -->
+                        <release>${java.version}</release>
+                        <parameters>true</parameters>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>${mapstruct.version}</version> 
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
