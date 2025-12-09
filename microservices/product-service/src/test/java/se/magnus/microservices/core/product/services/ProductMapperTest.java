@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import se.magnus.api.core.product.Product;
 import se.magnus.microservices.core.product.persistence.ProductEntity;
-import se.magnus.microservices.core.product.services.ProductMapper;
 
 public class ProductMapperTest {
     private ProductMapper mapper = Mappers.getMapper(ProductMapper.class);

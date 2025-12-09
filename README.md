@@ -140,6 +140,7 @@ java -jar microservices/product-composite-service/target/*.jar & \
 java -jar microservices/product-service/target/*.jar & \
 java -jar microservices/recommendation-service/target/*.jar & \
 java -jar microservices/review-service/target/*.jar &
+
 ### Build using docker
 cd microservices/product-service
 
@@ -172,6 +173,149 @@ chmod +x test-em-all.bash
 
 #### Docker
 ./test-docker.sh start stop
+
+##### Using RabbitMQ without using partitions
+
+./gradlew build && docker compose build && docker compose up -d
+
+./mvnw clean install 
+
+cd microservices && ../mvnw clean package spring-boot:repackage && cd ..
+
+docker-compose build && docker-compose up
+
+curl -s localhost:8080/actuator/health | jq -r .status
+
+body='{"productId":1,"name":"product name C","weight":300,
+ "recommendations":[
+{"recommendationId":1,"author":"author 1",
+"rate":1,"content":"content 1"},
+ {"recommendationId":2,"author":"author 2",
+"rate":2,"content":"content 2"},
+ {"recommendationId":3,"author":"author 3",
+"rate":3,"content":"content 3"}
+], "reviews":[
+ {"reviewId":1,"author":"author 1","subject":"subject 1",
+"content":"content 1"},
+ {"reviewId":2,"author":"author 2","subject":"subject 2",
+"content":"content 2"},
+ {"reviewId":3,"author":"author 3","subject":"subject 3",
+"content":"content 3"}
+]}'
+
+curl -X POST localhost:8080/product-composite -H "Content-Type: application/json" --data "$body"
+
+
+Open the following URL in a web browser: http://localhost:15672/#/queues. 
+
+Log in with the default username/password guest/guest
+
+For each topic, we can see one queue for auditGroup, one queue for the consumer group 
+that’s used by the corresponding core microservice, and one dead-letter queue. We can 
+also see that the auditGroup queues contain messages, as expected!
+Click on the products.auditGroup queue and scroll down to the Get messages section, 
+expand it, and click on the button named Get Message(s) to see the message in the queue:
+
+curl -s localhost:8080/product-composite/1 | jq
+
+##### Using RabbitMQ with partitions
+./gradlew build && docker compose build && docker compose up -d
+
+./mvnw install
+
+cd microservices && ../mvnw clean package spring-boot:repackage && cd ..
+
+docker-compose build && docker compose -f docker-compose-partitions.yml  up 
+
+curl -s localhost:8080/actuator/health | jq -r .status
+
+body='{"productId":1,"name":"product name 1","weight":100,
+ "recommendations":[
+{"recommendationId":1,"author":"author 1",
+"rate":1,"content":"content 1"},
+ {"recommendationId":2,"author":"author 2",
+"rate":2,"content":"content 2"},
+ {"recommendationId":3,"author":"author 3",
+"rate":3,"content":"content 3"}
+], "reviews":[
+ {"reviewId":1,"author":"author 1","subject":"subject 1",
+"content":"content 1"},
+ {"reviewId":2,"author":"author 2","subject":"subject 2",
+"content":"content 2"},
+ {"reviewId":3,"author":"author 3","subject":"subject 3",
+"content":"content 3"}
+]}'
+
+curl -X POST localhost:8080/product-composite -H "Content-Type: application/json" --data "$body"
+
+body='{"productId":2,"name":"product name 2","weight":200,
+ "recommendations":[
+{"recommendationId":1,"author":"author 1",
+"rate":1,"content":"content 1"},
+ {"recommendationId":2,"author":"author 2",
+"rate":2,"content":"content 2"},
+ {"recommendationId":3,"author":"author 3",
+"rate":3,"content":"content 3"}
+], "reviews":[
+ {"reviewId":1,"author":"author 1","subject":"subject 1",
+"content":"content 1"},
+ {"reviewId":2,"author":"author 2","subject":"subject 2",
+"content":"content 2"},
+ {"reviewId":3,"author":"author 3","subject":"subject 3",
+"content":"content 3"}
+]}'
+
+curl -X POST localhost:8080/product-composite -H "Content-Type: application/json" --data "$body"
+
+
+curl -s localhost:8080/product-composite/1 | jq
+
+curl -s localhost:8080/product-composite/2 | jq
+
+Open the following URL in a web browser: http://localhost:15672/#/queues. 
+
+Log in with the default username/password guest/guest
+
+##### Using Kafka with partitions
+./gradlew build && docker compose build && docker compose up -d
+
+./mvnw install
+
+cd microservices && ../mvnw clean package spring-boot:repackage && cd ..
+
+docker-compose build && docker compose -f docker-compose-kafka.yml  up 
+
+curl -s localhost:8080/actuator/health | jq -r .status
+
+Do as Above
+
+##### Running automated tests
+To use the test script to automatically run the tests with RabbitMQ and Kafka, perform the following steps:
+1. Run the tests using the default Docker Compose file (that is, with RabbitMQ without 
+partitions) with the following commands:
+
+unset COMPOSE_FILE
+
+./test-em-all.bash start stop
+
+2. Run the tests for RabbitMQ with two partitions per topic using the Docker Compose 
+docker-compose-partitions.yml file with the following commands:
+
+export COMPOSE_FILE=docker-compose-partitions.yml
+
+./test-em-all.bash start stop
+
+unset COMPOSE_FILE
+
+3. Finally, run the tests with Kafka and two partitions per topic using the Docker Compose 
+docker-compose-kafka.yml file with the following commands:
+
+export COMPOSE_FILE=docker-compose-kafka.yml
+
+./test-em-all.bash start stop
+
+unset COMPOSE_FILE
+
 ### Run
 cd microservices/
 
