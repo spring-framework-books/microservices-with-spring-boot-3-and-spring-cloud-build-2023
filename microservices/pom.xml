@@ -77,16 +77,15 @@
             <scope>provided</scope>
         </dependency>
 
-<!--         <dependency>
+        <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
-            <version>${spring.cloud.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-stream-kafka</artifactId>
-            <version>${spring.cloud.version}</version>
-        </dependency> -->
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -103,7 +102,9 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-        <!--We also need a test dependency in the product-composite project, spring-cloud-stream::test-binder, to bring in test support-->
+        <!--We
+        also need a test dependency in the product-composite project,
+        spring-cloud-stream::test-binder, to bring in test support-->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-stream-test-support</artifactId>
